@@ -1,3 +1,4 @@
+import emailjs from '@emailjs/browser'
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react'
 import { AnimatePresence, motion, useReducedMotion, useScroll } from 'framer-motion'
 import { gsap } from 'gsap'
@@ -291,17 +292,39 @@ function App() {
     return () => window.removeEventListener('keydown', closeOnEscape)
   }, [menuOpen, activeProject])
 
-  const handleContactSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const formData = new FormData(event.currentTarget)
-    const name = String(formData.get('name') ?? '').trim()
-    const email = String(formData.get('email') ?? '').trim()
-    const message = String(formData.get('message') ?? '').trim()
-    const subject = encodeURIComponent(`A note from ${name}`)
-    const body = encodeURIComponent(`From: ${name} (${email})\n\n${message}`)
-    setFormStatus('Your email app is opening with your message ready to send.')
-    window.location.href = `mailto:${contact.email}?subject=${subject}&body=${body}`
+  
+const [isSending, setIsSending] = useState(false)
+
+const handleContactSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  event.preventDefault()
+
+  const form = event.currentTarget
+
+  if (isSending) return
+
+  setIsSending(true)
+  setFormStatus('Sending your message...')
+
+  try {
+    await emailjs.sendForm(
+      'service_q4tldcg',
+      'template_j64whvl',
+      form,
+      {
+        publicKey: 'AGrtK2bqLbKi0vWQ4',
+      }
+    )
+
+    setFormStatus('Message sent successfully! Thank you for reaching out.')
+    form.reset()
+  } catch (error) {
+    console.error('EmailJS error:', error)
+    setFormStatus('Message could not be sent. Please try again or email me directly.')
+  } finally {
+    setIsSending(false)
   }
+}
+
 
   return (
     <>
@@ -492,8 +515,17 @@ function App() {
                 <input id="contact-email" name="email" type="email" autoComplete="email" placeholder="you@somewhere.com" maxLength={254} required />
                 <label htmlFor="contact-message">WHAT ARE YOU THINKING?</label>
                 <textarea id="contact-message" name="message" rows={3} minLength={10} maxLength={3000} placeholder="A little about your project, idea, or question..." required />
-                <button className="button button-primary form-submit" type="submit">Send a note <ArrowUpRight size={16} /></button>
-                <p className="form-disclaimer">Your email app opens with a ready-to-send note. No bots, no mailing list.</p>
+                <button
+                className="button button-primary form-submit"
+                type="submit"
+                disabled={isSending}
+                 >
+                {isSending ? 'Sending...' : 'Send a note'}
+                <ArrowUpRight size={16} />
+                </button>
+                <p className="form-disclaimer">
+                 Your message will be delivered directly to my inbox.
+                 </p>
                 <p className="form-status" role="status" aria-live="polite">{formStatus}</p>
               </form>
             </Reveal>

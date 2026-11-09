@@ -1,4 +1,3 @@
-import type { mark } from 'framer-motion/client'
 import {
   siCss,
   siGit,
@@ -7,7 +6,6 @@ import {
   siJavascript,
   siPostgresql,
   siPython,
-  siReact,
   siClaude,
 } from 'simple-icons'
 
